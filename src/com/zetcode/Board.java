@@ -12,9 +12,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.Scanner;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 public class Board extends JPanel implements ActionListener {
@@ -37,14 +37,16 @@ public class Board extends JPanel implements ActionListener {
     private boolean rightDirection = true;
     private boolean upDirection = false;
     private boolean downDirection = false;
-    private boolean inGame = false; // Starts false until green button pressed
-    private boolean gameStartedOnce = false;
+    private volatile boolean inGame = false; // Starts false until green button pressed
+    private volatile boolean gameStartedOnce = false;
+    private boolean turnedThisTick = false; // allow only one turn per game tick
 
     private Timer timer;
     private Image ball;
     private Image apple;
     private Image head;
     
+    private static final String PORT_NAME = "COM7"; // COM7 = virtual port, change to real Arduino port later
     private static SerialPort serialPort;
 
     public Board() {
@@ -53,36 +55,68 @@ public class Board extends JPanel implements ActionListener {
     }
     
     private void setupSerialPort() {
-        // Change "COM3" to your actual port name if different
-        serialPort = SerialPort.getCommPort("COM3");
+        serialPort = SerialPort.getCommPort(PORT_NAME);
         serialPort.setBaudRate(9600);
+        serialPort.setNumDataBits(8);
+        serialPort.setNumStopBits(SerialPort.ONE_STOP_BIT);
+        serialPort.setParity(SerialPort.NO_PARITY);
 
         if (serialPort.openPort()) {
-            System.out.println("SUCCESS: Connected to Arduino port!");
-            
-            // Thread to listen to Arduino buttons
+            System.out.println("SUCCESS: Connected to port " + PORT_NAME + " (Board v3 polling)");
+
             Thread serialListener = new Thread(() -> {
-                Scanner scanner = new Scanner(serialPort.getInputStream());
-                while (scanner.hasNextLine()) {
-                    String line = scanner.nextLine().trim();
-                    if (line.equals("L")) {
-                        turnLeft();
-                    } else if (line.equals("R")) {
-                        turnRight();
-                    } else if (line.equals("START")) {
-                        if (!inGame) {
-                            initGame();
+                System.out.println("Serial listener thread started.");
+                StringBuilder sb = new StringBuilder();
+                while (serialPort.isOpen()) {
+                    int available = serialPort.bytesAvailable();
+                    if (available > 0) {
+                        byte[] buf = new byte[available];
+                        int n = serialPort.readBytes(buf, buf.length);
+                        for (int i = 0; i < n; i++) {
+                            char c = (char) buf[i];
+                            if (c == '\n' || c == '\r') {
+                                if (sb.length() > 0) {
+                                    final String line = sb.toString().trim();
+                                    sb.setLength(0);
+                                    System.out.println("RECEIVED: " + line);
+                                    // Run game logic on the Swing thread, not the serial thread
+                                    SwingUtilities.invokeLater(() -> handleCommand(line));
+                                }
+                            } else {
+                                sb.append(c);
+                            }
+                        }
+                    } else if (available < 0) {
+                        break; // port error / closed
+                    } else {
+                        try {
+                            Thread.sleep(10);
+                        } catch (InterruptedException ex) {
+                            break;
                         }
                     }
                 }
-                scanner.close();
+                System.out.println("Serial listener stopped.");
             });
+            serialListener.setDaemon(true);
             serialListener.start();
         } else {
-            System.out.println("ERROR: Could not open serial port. Check connection.");
+            System.out.println("ERROR: Could not open " + PORT_NAME + ". Check connection.");
         }
     }
-    
+
+    private void handleCommand(String line) {
+        if (line.equals("L")) {
+            turnCounterClockwise();
+        } else if (line.equals("R")) {
+            turnClockwise();
+        } else if (line.equals("START")) {
+            if (!inGame) {
+                initGame();
+            }
+        }
+    }
+
     private void initBoard() {
         addKeyListener(new TAdapter());
         setBackground(Color.black);
@@ -111,6 +145,7 @@ public class Board extends JPanel implements ActionListener {
         rightDirection = true;
         upDirection = false;
         downDirection = false;
+        turnedThisTick = false;
 
         for (int z = 0; z < dots; z++) {
             x[z] = 50 - z * 10;
@@ -231,6 +266,43 @@ public class Board extends JPanel implements ActionListener {
         apple_y = ((r * DOT_SIZE));
     }
 
+    // Relative steering for the 2 Arduino buttons (L = counter-clockwise, R = clockwise)
+    public void turnCounterClockwise() {
+        if (!inGame || turnedThisTick) return;
+        if (rightDirection) {        // right -> up
+            setHeading(false, false, true, false);
+        } else if (upDirection) {    // up -> left
+            setHeading(true, false, false, false);
+        } else if (leftDirection) {  // left -> down
+            setHeading(false, false, false, true);
+        } else {                     // down -> right
+            setHeading(false, true, false, false);
+        }
+        turnedThisTick = true;
+    }
+
+    public void turnClockwise() {
+        if (!inGame || turnedThisTick) return;
+        if (rightDirection) {        // right -> down
+            setHeading(false, false, false, true);
+        } else if (downDirection) {  // down -> left
+            setHeading(true, false, false, false);
+        } else if (leftDirection) {  // left -> up
+            setHeading(false, false, true, false);
+        } else {                     // up -> right
+            setHeading(false, true, false, false);
+        }
+        turnedThisTick = true;
+    }
+
+    private void setHeading(boolean left, boolean right, boolean up, boolean down) {
+        leftDirection = left;
+        rightDirection = right;
+        upDirection = up;
+        downDirection = down;
+    }
+
+    // Absolute steering, used by keyboard arrows
     public void turnLeft() {
         if (inGame && !rightDirection) {
             leftDirection = true;
@@ -269,6 +341,7 @@ public class Board extends JPanel implements ActionListener {
             checkApple();
             checkCollision();
             move();
+            turnedThisTick = false;
         }
         repaint();
     }
