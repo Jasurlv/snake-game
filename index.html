@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description"
+    content="Arduino-controlled Snake game: Java, buttons, Wokwi, serial communication, and virtual-port testing.">
+  <meta name="theme-color" content="#0b1120">
+
+  <title>Snake × Arduino — Project Guide</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --background: #0b1120;
+      --surface: #121c2f;
+      --surface-light: #19253c;
+      --text: #eef4ff;
+      --muted: #aabbd2;
+      --green: #7af5b0;
+      --blue: #83bfff;
+      --border: #2b3b54;
+      --warning: #ffd18a;
+      --radius: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 95px;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(ellipse at top right,
+          rgba(64, 126, 185, 0.16),
+          transparent 40%),
+        var(--background);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      line-height: 1.7;
+    }
+
+    a {
+      color: var(--blue);
+      text-underline-offset: 4px;
+    }
+
+    a:hover {
+      color: var(--green);
+    }
+
+    a:focus-visible,
+    summary:focus-visible {
+      outline: 3px solid var(--green);
+      outline-offset: 5px;
+    }
+
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .container {
+      width: min(1120px, calc(100% - 40px));
+      margin-inline: auto;
+    }
+
+    .skip-link {
+      position: absolute;
+      left: 16px;
+      top: -100px;
+      padding: 12px;
+      background: var(--green);
+      color: #07160d;
+      z-index: 100;
+    }
+
+    .skip-link:focus {
+      top: 12px;
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(11, 17, 32, 0.96);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .navigation {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      min-height: 76px;
+    }
+
+    .brand {
+      font-weight: 850;
+      color: var(--text);
+      text-decoration: none;
+      letter-spacing: -0.5px;
+      white-space: nowrap;
+    }
+
+    .brand span {
+      color: var(--green);
+    }
+
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-decoration: none;
+    }
+
+    .nav-links a:hover {
+      color: var(--green);
+    }
+
+    .hero {
+      padding-block: 90px 56px;
+    }
+
+    .eyebrow {
+      color: var(--green);
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      line-height: 1.15;
+      letter-spacing: -0.035em;
+    }
+
+    h1 {
+      margin: 18px 0 24px;
+      font-size: clamp(2.8rem, 7vw, 5.3rem);
+      max-width: 950px;
+    }
+
+    h1 span {
+      color: var(--green);
+    }
+
+    h2 {
+      margin: 12px 0 20px;
+      font-size: clamp(1.9rem, 4vw, 2.7rem);
+    }
+
+    h3 {
+      margin-top: 0;
+      font-size: 1.25rem;
+    }
+
+    p {
+      margin-top: 0;
+    }
+
+    .lead {
+      color: var(--muted);
+      font-size: 1.15rem;
+      max-width: 760px;
+    }
+
+    .actions,
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 26px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 20px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 750;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .button.primary {
+      background: var(--green);
+      border-color: var(--green);
+      color: #082114;
+    }
+
+    .button:hover {
+      color: var(--text);
+      background: var(--surface-light);
+    }
+
+    .button.primary:hover {
+      background: #a1fac8;
+      color: #082114;
+    }
+
+    .tag {
+      padding: 5px 12px;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    section {
+      padding-block: 46px;
+    }
+
+    .section-intro {
+      color: var(--muted);
+      max-width: 780px;
+      margin-bottom: 28px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 20px;
+    }
+
+    .two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .card {
+      padding: 26px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      min-width: 0;
+    }
+
+    .card p,
+    .card li {
+      color: var(--muted);
+    }
+
+    .card p:last-child {
+      margin-bottom: 0;
+    }
+
+    .number {
+      display: inline-grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      margin-bottom: 20px;
+      border-radius: 11px;
+      background: rgba(122, 245, 176, 0.1);
+      color: var(--green);
+      font-weight: 800;
+    }
+
+    .callout {
+      padding: 20px 24px;
+      margin-block: 24px;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--blue);
+      border-radius: 12px;
+      background: var(--surface);
+      color: var(--muted);
+    }
+
+    .callout.warning {
+      border-left-color: var(--warning);
+    }
+
+    .callout strong {
+      color: var(--text);
+    }
+
+    .flow {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 24px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .flow-item {
+      flex: 1 1 130px;
+      padding: 18px 12px;
+      text-align: center;
+      background: var(--surface-light);
+      border-radius: 12px;
+      font-weight: 750;
+    }
+
+    .flow-item small {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    .arrow {
+      color: var(--green);
+      font-size: 1.4rem;
+    }
+
+    figure {
+      overflow: hidden;
+      margin: 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+
+    figure img {
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      background: var(--surface-light);
+    }
+
+    figcaption {
+      padding: 16px 20px;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 520px;
+      background: var(--surface);
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 15px 18px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--text);
+      background: var(--surface-light);
+    }
+
+    td {
+      color: var(--muted);
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    code,
+    pre {
+      font-family: "Cascadia Code", Consolas, monospace;
+    }
+
+    :not(pre)>code {
+      color: var(--green);
+      background: rgba(122, 245, 176, 0.07);
+      border-radius: 5px;
+      padding: 2px 5px;
+      overflow-wrap: anywhere;
+    }
+
+    pre {
+      overflow-x: auto;
+      background: #080e19;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      font-size: 0.86rem;
+      line-height: 1.7;
+      color: #d5e7ff;
+    }
+
+    .steps {
+      counter-reset: setup;
+      list-style: none;
+      padding: 0;
+    }
+
+    .steps>li {
+      counter-increment: setup;
+      position: relative;
+      padding: 24px 24px 24px 78px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--surface);
+      margin-bottom: 18px;
+    }
+
+    .steps>li::before {
+      content: counter(setup);
+      position: absolute;
+      left: 24px;
+      top: 24px;
+      color: var(--green);
+      font-weight: 850;
+      font-size: 1.25rem;
+    }
+
+    .steps p {
+      color: var(--muted);
+      margin-bottom: 0;
+    }
+
+    .status {
+      display: inline-block;
+      margin-bottom: 14px;
+      padding: 4px 10px;
+      border-radius: 100px;
+      font-size: 0.73rem;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      color: var(--green);
+      background: rgba(122, 245, 176, 0.1);
+    }
+
+    .status.pending {
+      color: var(--warning);
+      background: rgba(255, 209, 138, 0.1);
+    }
+
+    details {
+      padding: 20px 22px;
+      margin-bottom: 12px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 750;
+    }
+
+    details p {
+      margin: 14px 0 0;
+      color: var(--muted);
+    }
+
+    footer {
+      padding-block: 34px;
+      margin-top: 36px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 800px) {
+
+      .three,
+      .two {
+        grid-template-columns: 1fr;
+      }
+
+      .navigation {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+        padding-block: 14px;
+      }
+
+      .nav-links {
+        gap: 12px;
+      }
+
+      .hero {
+        padding-top: 54px;
+      }
+
+      .arrow {
+        display: none;
+      }
+
+      html {
+        scroll-padding-top: 140px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <a href="#main" class="skip-link">Skip to content</a>
+
+  <header class="site-header">
+    <nav class="navigation container" aria-label="Main navigation">
+      <a class="brand" href="#">SNAKE <span>× ARDUINO</span></a>
+
+      <div class="nav-links">
+        <a href="#overview">Overview</a>
+        <a href="#communication">Connection</a>
+        <a href="#code">Code</a>
+        <a href="#setup">Setup</a>
+        <a href="#progress">Progress</a>
+        <a href="#screenshots">Gallery</a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main" class="container">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="eyebrow">Physical input. Digital movement.</div>
+
+      <h1 id="hero-title">
+        A classic Snake game.<br>
+        A <span>hardware-powered</span> controller.
+      </h1>
+
+      <p class="lead">
+        A project connecting a Java Snake game with an Arduino-style
+        button controller. Explore how a button press becomes a serial
+        message—and how that message changes the snake’s direction.
+      </p>
+
+      <div class="actions">
+        <a class="button primary" href="#setup">Start the project →</a>
+        <a class="button" href="https://github.com/Jasurlv/snake-game">
+          View GitHub repository
+        </a>
+      </div>
+
+      <div class="tags" aria-label="Project technologies">
+        <span class="tag">Java</span>
+        <span class="tag">Arduino / C++</span>
+        <span class="tag">Wokwi</span>
+        <span class="tag">Serial communication</span>
+        <span class="tag">PuTTY</span>
+        <span class="tag">com0com</span>
+      </div>
+    </section>
+
+    <figure>
+      <!-- Replace this URL with assets/snake-game.png -->
+      <img src="https://placehold.co/1440x810/121c2f/7af5b0?text=PLACEHOLDER+%7C+Java+Snake+Game"
+        alt="Placeholder for a screenshot of the running Java Snake game" width="1440" height="810">
+      <figcaption>
+        Screenshot placeholder: replace with the running game and its
+        controller setup. This is not evidence of a completed test.
+      </figcaption>
+    </figure>
+
+    <section id="overview">
+      <div class="eyebrow">01 / Introduction</div>
+      <h2>Where software meets electronics.</h2>
+
+      <p class="section-intro">
+        The Java application runs the game on a computer. The Arduino
+        controller reads the buttons. Serial communication connects
+        these two parts, allowing physical input to control software.
+      </p>
+
+      <div class="grid three">
+        <article class="card">
+          <span class="number">01</span>
+          <h3>The controller board</h3>
+          <p>
+            An Arduino board contains a microcontroller: a small
+            programmable chip with digital input and output pins.
+            It runs the uploaded sketch and checks button states.
+            It is a controller board, not a PC motherboard.
+          </p>
+        </article>
+
+        <article class="card">
+          <span class="number">02</span>
+          <h3>The push buttons</h3>
+          <p>
+            Buttons are switches—not microcontrollers themselves.
+            Pressing a button changes the electrical state of a pin.
+            The sketch translates that change into a direction command.
+          </p>
+        </article>
+
+        <article class="card">
+          <span class="number">03</span>
+          <h3>The Java game</h3>
+          <p>
+            Java receives a command, validates it, and requests a new
+            direction. The game loop remains responsible for movement,
+            food, score, collisions, and drawing the board.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section id="communication">
+      <div class="eyebrow">02 / Architecture</div>
+      <h2>One button press, five stages.</h2>
+
+      <div class="flow" aria-label="Controller-to-game data flow">
+        <div class="flow-item">
+          Button
+          <small>Changes a digital input</small>
+        </div>
+        <span class="arrow" aria-hidden="true">→</span>
+        <div class="flow-item">
+          Arduino sketch
+          <small>Creates a command</small>
+        </div>
+        <span class="arrow" aria-hidden="true">→</span>
+        <div class="flow-item">
+          Serial transport
+          <small>Transfers bytes</small>
+        </div>
+        <span class="arrow" aria-hidden="true">→</span>
+        <div class="flow-item">
+          Java listener
+          <small>Parses the message</small>
+        </div>
+        <span class="arrow" aria-hidden="true">→</span>
+        <div class="flow-item">
+          Game loop
+          <small>Applies valid movement</small>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Example, not a verified repository specification:</strong>
+        this guide uses U, D, L, and R commands, newline-separated
+        messages, and 9600 baud with 8 data bits, no parity, and 1 stop
+        bit (8N1). Both sides must use the same actual settings.
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Button</th>
+              <th scope="col">Example Arduino pin</th>
+              <th scope="col">Message</th>
+              <th scope="col">Java action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Up</td>
+              <td>D2</td>
+              <td><code>U\n</code></td>
+              <td>Request upward movement</td>
+            </tr>
+            <tr>
+              <td>Down</td>
+              <td>D3</td>
+              <td><code>D\n</code></td>
+              <td>Request downward movement</td>
+            </tr>
+            <tr>
+              <td>Left</td>
+              <td>D4</td>
+              <td><code>L\n</code></td>
+              <td>Request left movement</td>
+            </tr>
+            <tr>
+              <td>Right</td>
+              <td>D5</td>
+              <td><code>R\n</code></td>
+              <td>Request right movement</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="section-intro" style="margin-top: 18px">
+        Here, \n means a newline byte, not the literal characters
+        backslash and n. Arduino Serial.println normally sends CRLF;
+        Java’s line reader can handle that too.
+      </p>
+
+      <div class="grid two">
+        <article class="card">
+          <h3>Physical Arduino connection</h3>
+          <pre><code>Buttons → Arduino → USB serial → Java</code></pre>
+          <p>
+            A USB-connected board usually exposes a serial device,
+            sometimes through a USB-to-serial chip. Java opens that
+            device’s port. com0com is not needed for this route.
+          </p>
+        </article>
+
+        <article class="card">
+          <h3>Virtual-port connection test</h3>
+          <pre><code>PuTTY → COM5 ⇄ COM6 → Java</code></pre>
+          <p>
+            com0com creates two connected virtual ports on Windows.
+            Data written into one end appears at the other. PuTTY
+            sends test commands instead of an Arduino.
+          </p>
+        </article>
+      </div>
+
+      <div class="callout warning">
+        <strong>Wokwi needs a separate connection plan.</strong>
+        Wokwi can simulate the circuit and show sketch output in its
+        Serial Monitor. That browser simulation does not automatically
+        become a Windows COM port. To reach desktop Java, use a
+        serial-forwarding integration supported by your Wokwi environment,
+        or move to a physical Arduino. com0com alone is not that bridge.
+      </div>
+    </section>
+
+    <section id="code">
+      <div class="eyebrow">03 / Code explained</div>
+      <h2>Different languages. One shared protocol.</h2>
+
+      <p class="section-intro">
+        The Arduino .ino sketch is compiled as C/C++ and runs on the
+        microcontroller, or a simulated microcontroller in Wokwi.
+        The Java application runs inside the JVM on your computer.
+        They exchange bytes—not direct function calls.
+      </p>
+
+      <article class="card">
+        <h3>Arduino: read, debounce, send</h3>
+        <p>
+          This illustrative sketch uses D2–D5 and INPUT_PULLUP.
+          Wire each button between its input pin and GND:
+          released is HIGH, pressed is LOW. It sends one command
+          per stable press and does not repeat continuously while held.
+        </p>
+
+        <pre><code>// Illustrative sketch. Match these values to your real project.
+const byte pins[] = {2, 3, 4, 5};
+const char commands[] = {'U', 'D', 'L', 'R'};
+
+bool lastReading[] = {HIGH, HIGH, HIGH, HIGH};
+bool stableState[] = {HIGH, HIGH, HIGH, HIGH};
+unsigned long changedAt[] = {0, 0, 0, 0};
+
+const unsigned long debounceMs = 30;
+
+void setup() {
+  Serial.begin(9600);
+
+  for (byte i = 0; i &lt; 4; i++) {
+    pinMode(pins[i], INPUT_PULLUP);
+  }
+}
+
+void loop() {
+  unsigned long now = millis();
+
+  for (byte i = 0; i &lt; 4; i++) {
+    bool reading = digitalRead(pins[i]);
+
+    if (reading != lastReading[i]) {
+      changedAt[i] = now;
+      lastReading[i] = reading;
+    }
+
+    if (now - changedAt[i] &gt;= debounceMs
+        &amp;&amp; reading != stableState[i]) {
+      stableState[i] = reading;
+
+      if (stableState[i] == LOW) {
+        Serial.println(commands[i]);
+      }
+    }
+  }
+}</code></pre>
+
+        <p>
+          Debouncing filters the rapid contact changes that can happen
+          during a physical press. In Wokwi, run the simulation and
+          check that each button produces the expected command in
+          the Serial Monitor.
+        </p>
+      </article>
+
+      <article class="card" style="margin-top: 20px">
+        <h3>Java: receive, validate, queue</h3>
+        <p>
+          The following is an integration example using jSerialComm,
+          not a claim about the library used in this repository.
+          It belongs inside your application’s serial-input component.
+          The game loop should consume the queued commands safely.
+        </p>
+
+        <pre><code>// Add jSerialComm to your build before using this example.
+import com.fazecast.jSerialComm.SerialPort;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+
+// Members of your serial-input component:
+private final BlockingQueue&lt;String&gt; inputs =
+    new ArrayBlockingQueue&lt;&gt;(32);
+
+public void readController(String portName) {
+    SerialPort port = SerialPort.getCommPort(portName);
+    port.setComPortParameters(
+        9600, 8, SerialPort.ONE_STOP_BIT, SerialPort.NO_PARITY
+    );
+    port.setFlowControl(SerialPort.FLOW_CONTROL_DISABLED);
+    port.setComPortTimeouts(
+        SerialPort.TIMEOUT_READ_BLOCKING, 0, 0
+    );
+
+    if (!port.openPort()) {
+        System.err.println("Cannot open " + portName);
+        return;
+    }
+
+    try (BufferedReader reader = new BufferedReader(
+            new InputStreamReader(
+                port.getInputStream(), StandardCharsets.US_ASCII))) {
+
+        String line;
+        while ((line = reader.readLine()) != null) {
+            String command = line.trim();
+
+            if (command.matches("[UDLR]")) {
+                inputs.offer(command);
+            }
+        }
+    } catch (Exception error) {
+        System.err.println("Serial error: " + error.getMessage());
+    } finally {
+        port.closePort();
+    }
+}</code></pre>
+
+        <p>
+          Run the blocking reader on a background thread, not the UI
+          thread. During each game tick, consume at most one eligible
+          direction request and reject movement directly opposite to
+          the snake’s current direction. Add connection shutdown and
+          reconnection handling in the complete application.
+        </p>
+      </article>
+
+      <div class="callout">
+        <strong>Does Java send anything back?</strong>
+        Not necessarily. This guide describes one-way controller input.
+        A two-way protocol could later send scores, status, or LED
+        commands back to the board, but both programs would need to
+        implement those messages.
+      </div>
+    </section>
+
+    <section id="setup">
+      <div class="eyebrow">04 / Getting started</div>
+      <h2>Build the connection step by step.</h2>
+
+      <div class="grid two">
+        <article class="card">
+          <h3>Software</h3>
+          <ul>
+            <li>Git and a compatible Java JDK.</li>
+            <li>An IDE or the repository’s build tool.</li>
+            <li>The serial library required by the Java project.</li>
+            <li>Wokwi for circuit and sketch simulation.</li>
+            <li>PuTTY and com0com for Windows virtual-port tests.</li>
+            <li>Arduino IDE or another uploader for real hardware.</li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <h3>Optional physical hardware</h3>
+          <ul>
+            <li>A compatible Arduino board.</li>
+            <li>Four push buttons.</li>
+            <li>A breadboard and jumper wires.</li>
+            <li>A USB data cable.</li>
+            <li>No external pull-up resistors for this INPUT_PULLUP example.</li>
+          </ul>
+          <p>
+            Wire with the board powered off. Check the board pinout
+            and the connected legs of four-terminal push buttons.
+          </p>
+        </article>
+      </div>
+
+      <ol class="steps">
+        <li>
+          <h3>Clone and inspect the project</h3>
+          <pre><code>git clone https://github.com/Jasurlv/snake-game.git
+cd snake-game</code></pre>
+          <p>
+            Open the project in your IDE. Check its build files for
+            the required JDK and dependencies. Locate the game entry
+            point and serial configuration. The exact build and run
+            commands depend on the repository.
+          </p>
+        </li>
+
+        <li>
+          <h3>Check the Wokwi controller</h3>
+          <a href="https://wokwi.com/projects/476130594543031297" target="_blank" rel="noopener noreferrer">Wokwi
+            project link</a>
+          <p>
+            Open the project’s Wokwi by link top, or create a matching circuit.
+            Wokwi commonly uses sketch.ino and diagram.json. If your
+            sketch is called scatch.ino, use or rename it as required
+            by your environment. Start the simulation, press each
+            button, and inspect Serial Monitor output.
+          </p>
+        </li>
+
+        <li>
+          <h3>Create a virtual serial pair</h3>
+          <a href="https://sourceforge.net/projects/com0com/" target="_blank" rel="noopener noreferrer">download com0com
+            here</a>
+          <p>
+            For a Windows-only software test, install a trusted,
+            compatible com0com driver and create a free port pair.
+            This guide uses COM5 and COM6 as examples. Use the actual
+            names shown on your machine; do not overwrite existing ports.
+          </p>
+        </li>
+
+        <li>
+          <h3>Connect Java to one end</h3>
+          <p>
+            Configure the Java application to open COM6 at 9600 baud,
+            8N1, with flow control disabled. Launch the game using its
+            real entry point. Confirm that opening the port succeeds.
+          </p>
+        </li>
+
+        <li>
+          <h3>Connect PuTTY to the other end</h3>
+          <a href="https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html" target="_blank"
+            rel="noopener noreferrer">download PuTTY here</a>
+          <p>
+            In PuTTY, select Serial, enter COM5, and use matching
+            settings. Send U, D, L, or R followed by a line ending.
+            In a typical PuTTY configuration, Enter sends carriage
+            return, which the illustrated Java readLine parser accepts.
+            If your actual parser requires LF, send LF explicitly,
+            commonly with Ctrl+J.
+          </p>
+        </li>
+
+        <li>
+          <h3>Test the actual controller route separately</h3>
+          <p>
+            For real hardware, upload the sketch, close other serial
+            monitors, and point Java at the Arduino’s USB serial port.
+            For Wokwi-to-Java control, first configure and document
+            a supported bridge. Neither route is proven solely by
+            a successful PuTTY/com0com test.
+          </p>
+        </li>
+      </ol>
+    </section>
+
+    <section id="progress">
+      <div class="eyebrow">05 / Development log</div>
+      <h2>Today’s milestone: connection testing.</h2>
+
+      <p class="section-intro">
+        Based on the developer’s report, the PuTTY and com0com
+        simulation-connection tests passed successfully. This is a
+        useful milestone for checking serial communication independently
+        of physical buttons.
+      </p>
+
+      <div class="grid three">
+        <article class="card">
+          <span class="status">REPORTED SUCCESS</span>
+          <h3>Virtual-port connection</h3>
+          <p>
+            Worked with com0com to test a simulated serial connection
+            between paired Windows ports.
+          </p>
+        </article>
+
+        <article class="card">
+          <span class="status">REPORTED SUCCESS</span>
+          <h3>PuTTY testing</h3>
+          <p>
+            Used PuTTY during the serial test session. The developer
+            reported that the connection test worked successfully.
+          </p>
+        </article>
+
+        <article class="card">
+          <span class="status pending">ADD TEST EVIDENCE</span>
+          <h3>Record the exact results</h3>
+          <p>
+            Add the test date, actual port names, baud rate, commands
+            sent, Java output, and observed game behavior. Attach
+            screenshots before treating this as a reproducible test log.
+          </p>
+        </article>
+      </div>
+
+      <div class="callout warning">
+        <strong>Scope of this milestone:</strong>
+        a working virtual-port test is not, by itself, proof that the
+        physical Arduino or Wokwi bridge controls the game end to end.
+        Record those as separate tests when completed.
+      </div>
+    </section>
+
+    <section id="screenshots">
+      <div class="eyebrow">06 / Project gallery</div>
+      <h2>Make the project visible.</h2>
+
+      <p class="section-intro">
+        These are intentionally labeled placeholder images.
+        Replace them with screenshots from your own project.
+      </p>
+
+      <div class="grid two">
+        <figure>
+          <!-- Replace with assets/wokwi-circuit.png -->
+          <img src="https://placehold.co/960x540/19253c/83bfff?text=PLACEHOLDER+%7C+Wokwi+Circuit"
+            alt="Placeholder for the Wokwi Arduino circuit and four buttons" width="960" height="540" loading="lazy">
+          <figcaption>
+            Wokwi circuit: show the board, D2–D5 connections, and GND wiring.
+          </figcaption>
+        </figure>
+
+        <figure>
+          <!-- Replace with assets/arduino-sketch.png -->
+          <img src="https://placehold.co/960x540/19253c/7af5b0?text=PLACEHOLDER+%7C+Arduino+Sketch"
+            alt="Placeholder for Arduino sketch code and serial output" width="960" height="540" loading="lazy">
+          <figcaption>
+            Arduino code: show button handling and emitted serial commands.
+          </figcaption>
+        </figure>
+
+        <figure>
+          <!-- Replace with assets/putty-com0com.png -->
+          <img src="https://placehold.co/960x540/19253c/ffd18a?text=PLACEHOLDER+%7C+PuTTY+and+com0com"
+            alt="Placeholder for PuTTY settings and the com0com port pair" width="960" height="540" loading="lazy">
+          <figcaption>
+            Connection test: show actual paired ports and terminal settings.
+          </figcaption>
+        </figure>
+
+        <figure>
+          <!-- Replace with assets/java-serial.png -->
+          <img src="https://placehold.co/960x540/19253c/c5b4ff?text=PLACEHOLDER+%7C+Java+Serial+Input"
+            alt="Placeholder for Java serial-handling code and received commands" width="960" height="540"
+            loading="lazy">
+          <figcaption>
+            Java integration: show command parsing, logs, and game response.
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="troubleshooting">
+      <div class="eyebrow">07 / Troubleshooting</div>
+      <h2>When something does not connect.</h2>
+
+      <details>
+        <summary>Java cannot open the port</summary>
+        <p>
+          Check that the port exists and the name matches exactly.
+          Close applications using that same endpoint. In the paired-port
+          test, PuTTY and Java must open opposite ends. Verify driver
+          installation and operating-system permissions.
+        </p>
+      </details>
+
+      <details>
+        <summary>Commands appear in Wokwi, but not in Java</summary>
+        <p>
+          Wokwi Serial Monitor output is not automatically delivered to
+          a desktop COM port. Confirm that a supported bridge is installed,
+          configured, and forwarding to the endpoint Java opens.
+          Otherwise, use PuTTY for the virtual-port test or real hardware.
+        </p>
+      </details>
+
+      <details>
+        <summary>The port opens, but the snake does not move</summary>
+        <p>
+          Log incoming commands before changing game state. Check the
+          command spelling, line ending, port pairing, and game state.
+          Verify that the game loop consumes the input and that the
+          requested turn is not correctly rejected as an illegal reversal.
+        </p>
+      </details>
+
+      <details>
+        <summary>One press produces multiple commands</summary>
+        <p>
+          Add debouncing and send only on the released-to-pressed
+          transition. Continuously sending while a button is held can
+          fill the input queue and cause delayed turns.
+        </p>
+      </details>
+
+      <details>
+        <summary>The game window freezes while waiting for input</summary>
+        <p>
+          Move blocking serial reads off the UI thread. Transfer input
+          through a thread-safe queue, and keep UI updates on the thread
+          required by your framework.
+        </p>
+      </details>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <strong>Snake × Arduino</strong> — project documentation by <a href="https://github.com/Jasurlv" target="_blank"
+        rel="noopener noreferrer">Jasurlv</a>.
+      <br>
+      Built with HTML and CSS.
+      <a href="https://github.com/Jasurlv/snake-game">Explore the source on GitHub →</a>
+    </div>
+  </footer>
+</body>
+
+</html>
